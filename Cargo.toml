@@ -1,0 +1,12 @@
+[package]
+name = "rtc-share"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde = "1.0"
+serde_json = "1.0"
+serde_with = "3.11"
+tokio = "1.40"
+tokio-tungstenite = "0.24"
+webrtc = "0.11"
