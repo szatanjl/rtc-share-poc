@@ -5,6 +5,7 @@
 	"private": true,
 	"dependencies": {
 		"uuid": "10.0",
+		"werift": "0.20",
 		"ws": "8.18"
 	},
 	"devDependencies": {
@@ -12,6 +13,7 @@
 		"http-server": "14.1"
 	},
 	"scripts": {
-		"start": "concurrently -k 'node js/server.js' 'http-server js/'"
+		"start": "concurrently -k 'node js/server.js' 'http-server js/'",
+		"cli": "node js/cli.js"
 	}
 }
