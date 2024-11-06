@@ -6,12 +6,20 @@ var WebSocket = require("ws");
 
 var cfg = {
 	iceServers: [
-		{ urls: "stun:stun.1.google.com:19302" },
+		{
+			urls: [
+				//"stun:stun.1.google.com:19302",
+				"stun:3.66.118.100:3478",
+			],
+			username: "golem",
+			credential: "melog",
+			credentialType: "password",
+		},
 	],
 };
 var rtc = new RTCPeerConnection(cfg);
 var chat = null;
-var server = new WebSocket("ws://localhost:9090");
+var server = new WebSocket("ws://35.158.196.200:3049");
 var username = null;
 
 

@@ -50,7 +50,7 @@ async fn main() {
         ..RTCConfiguration::default()
     };
     let rtc = APIBuilder::new().build().new_peer_connection(rtc_cfg).await.unwrap();
-    let ws = connect_async("ws://18.185.17.193:3049").await.unwrap().0;
+    let ws = connect_async("ws://35.158.196.200:3049").await.unwrap().0;
     let (ws_write, mut ws_read) = ws.split();
     let username = args().nth(1);
 

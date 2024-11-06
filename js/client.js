@@ -13,7 +13,7 @@ var cfg = {
 };
 var rtc = new RTCPeerConnection(cfg);
 var chat = null;
-var server = new WebSocket("ws://18.185.17.193:3049");
+var server = new WebSocket("ws://35.158.196.200:3049");
 
 var username = document.getElementById("username");
 var connect = document.getElementById("connect");
