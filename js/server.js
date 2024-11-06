@@ -5,7 +5,7 @@ var server = new ws.WebSocketServer({ port: 3049 });
 var users = {};
 
 server.on("connection", function(connection) {
-	var username = uuid.v4();
+	var username = uuid.v4().substring(9, 18);
 	users[username] = connection;
 	console.info("User connect:", username);
 	connection.send(JSON.stringify({ username }));
