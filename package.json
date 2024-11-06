@@ -13,7 +13,7 @@
 		"http-server": "14.1"
 	},
 	"scripts": {
-		"start": "concurrently -k 'node js/server.js' 'http-server js/'",
+		"start": "concurrently -k 'node js/server.js' 'http-server -p 3000 js/'",
 		"cli": "node js/cli.js"
 	}
 }

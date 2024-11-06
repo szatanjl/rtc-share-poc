@@ -1,7 +1,7 @@
 var uuid = require("uuid");
 var ws = require("ws");
 
-var server = new ws.WebSocketServer({ port: 9090 });
+var server = new ws.WebSocketServer({ port: 3049 });
 var users = {};
 
 server.on("connection", function(connection) {

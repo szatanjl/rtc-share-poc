@@ -1,11 +1,19 @@
 var cfg = {
 	iceServers: [
-		{ urls: "stun:stun.1.google.com:19302" },
+		{
+			urls: [
+				//"stun:stun.1.google.com:19302",
+				"stun:3.66.118.100:3478",
+			],
+			username: "golem",
+			credential: "melog",
+			credentialType: "password",
+		},
 	],
 };
 var rtc = new RTCPeerConnection(cfg);
 var chat = null;
-var server = new WebSocket("ws://localhost:9090");
+var server = new WebSocket("ws://18.185.17.193:3049");
 
 var username = document.getElementById("username");
 var connect = document.getElementById("connect");

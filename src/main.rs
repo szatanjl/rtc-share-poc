@@ -38,14 +38,19 @@ async fn main() {
     let rtc_cfg = RTCConfiguration {
         ice_servers: vec![
             RTCIceServer {
-                urls: vec![String::from("stun:stun.1.google.com:19302")],
-                ..RTCIceServer::default()
+                urls: vec![
+                    //String::from("stun:stun.1.google.com:19302"),
+                    String::from("stun:3.66.118.100:3478"),
+                ],
+                username: String::from("golem"),
+                credential: String::from("melog"),
+                credential_type: webrtc::ice_transport::ice_credential_type::RTCIceCredentialType::Password,
             },
         ],
         ..RTCConfiguration::default()
     };
     let rtc = APIBuilder::new().build().new_peer_connection(rtc_cfg).await.unwrap();
-    let ws = connect_async("ws://localhost:9090").await.unwrap().0;
+    let ws = connect_async("ws://18.185.17.193:3049").await.unwrap().0;
     let (ws_write, mut ws_read) = ws.split();
     let username = args().nth(1);
 
