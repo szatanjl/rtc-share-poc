@@ -23,10 +23,6 @@ var server = new WebSocket("ws://35.158.196.200:3049");
 var username = null;
 
 
-server.on("open", function() {
-	console.info("Server connected");
-});
-
 server.on("error", function(err) {
 	console.error("Server error:", err);
 });
@@ -36,8 +32,6 @@ server.on("close", function() {
 });
 
 rtc.onconnectionstatechange =
-rtc.oniceconnectionstatechange =
-rtc.onicegatheringstatechange =
 rtc.onsignalingstatechange =
 function() {
 	console.debug("Rtc state:", {
@@ -46,7 +40,23 @@ function() {
 		iceGatheringState: rtc.iceGatheringState,
 		signalingState: rtc.signalingState,
 	});
-}
+};
+
+rtc.iceGatheringStateChange.subscribe(() => {
+	console.debug("Rtc state:", {
+		connectionState: rtc.connectionState,
+		iceConnectionState: rtc.iceConnectionState,
+		iceGatheringState: rtc.iceGatheringState,
+		signalingState: rtc.signalingState,
+	});
+
+	var state = rtc.iceGatheringState;
+	var desc = rtc.localDescription;
+	if (state === "complete") {
+		console.info(`Connect(${desc.type}):`, username, desc);
+		serverSend({ desc });
+	}
+});
 
 
 server.on("message", function(msg) {
@@ -57,12 +67,10 @@ server.on("message", function(msg) {
 		return;
 	}
 
-	if (data.candidate !== undefined) {
-		serverOnCandidate(data.username, data.candidate);
-	} else if (data.answer != null) {
-		serverOnAnswer(data.username, data.answer);
-	} else if (data.offer != null) {
-		serverOnOffer(data.username, data.offer);
+	if (data.desc != null && data.desc.type === "answer") {
+		serverOnAnswer(data.username, data.desc);
+	} else if (data.desc != null && data.desc.type === "offer") {
+		serverOnOffer(data.username, data.desc);
 	} else {
 		serverOnLogin(data.username);
 	}
@@ -75,9 +83,8 @@ function serverOnLogin(username) {
 function connect() {
 	chat = initChat();
 	rtc.createOffer().then(function(offer) {
-		console.info("Connect(offer):", username, offer);
+		console.debug("Create offer:", username, offer);
 		rtc.setLocalDescription(offer);
-		serverSend({ offer });
 	});
 }
 
@@ -85,10 +92,9 @@ function serverOnOffer(user, offer) {
 	console.info("Server offer:", user, offer);
 	rtc.setRemoteDescription(new RTCSessionDescription(offer.sdp, offer.type));
 	rtc.createAnswer().then(function(answer) {
-		console.info("Connect(anwer):", user, answer);
-		rtc.setLocalDescription(answer);
+		console.debug("Create answer:", user, answer);
 		username = user;
-		serverSend({ answer });
+		rtc.setLocalDescription(answer);
 	});
 }
 
@@ -97,26 +103,14 @@ function serverOnAnswer(username, answer) {
 	rtc.setRemoteDescription(new RTCSessionDescription(answer.sdp, answer.type));
 }
 
-rtc.onicecandidate = function(ev) {
-	console.info("Rtc new ICE candidate:", ev.candidate);
-	if (ev.candidate == null) {
-		ev.candidate = null;
-	}
-	serverSend({ candidate: ev.candidate });
-};
-
-function serverOnCandidate(username, candidate) {
-	if (candidate != null) {
-		var candidate = new IceCandidate(candidate);
-	}
-	console.info("Server new ICE candidate:", username, candidate);
-	rtc.addIceCandidate(candidate);
-}
-
 function serverSend(msg) {
 	msg.username = username;
 	console.debug("Send to server:", msg);
 	server.send(JSON.stringify(msg));
+}
+
+rtc.ondatachannel = function(ev) {
+	chat = initChat(ev.channel);
 }
 
 function initChat(chat) {
@@ -144,20 +138,20 @@ function initChat(chat) {
 	return chat;
 }
 
-username = argv[2];
-if (username != null) {
-	connect();
-} else {
-	rtc.ondatachannel = function(ev) {
-		chat = initChat(ev.channel);
+
+server.on("open", function() {
+	console.info("Server connected");
+
+	username = argv[2];
+	if (username != null) {
+		console.info("Connect to:", username);
+		connect();
 	}
-}
 
-
-const rl = readline.createInterface({
-	input: process.stdin,
-	output: process.stdout,
-	terminal: true,
+	const rl = readline.createInterface({
+		input: process.stdin,
+		output: process.stdout,
+		terminal: true,
+	});
+	rl.on("line", msg => chat.send(msg));
 });
-
-rl.on("line", msg => chat.send(msg));
