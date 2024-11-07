@@ -55,9 +55,7 @@ server.onmessage = function(msg) {
 		return;
 	}
 
-	if (data.candidate !== undefined) {
-		serverOnCandidate(data.username, data.candidate);
-	} else if (data.answer != null) {
+	if (data.answer != null) {
 		serverOnAnswer(data.username, data.answer);
 	} else if (data.offer != null) {
 		serverOnOffer(data.username, data.offer);
@@ -73,9 +71,12 @@ function serverOnLogin(username) {
 connect.onclick = function() {
 	chat = initChat();
 	rtc.createOffer().then(function(offer) {
-		console.info("Connect(offer):", username.value, offer);
-		rtc.setLocalDescription(offer);
-		serverSend({ offer });
+		console.debug("Before Connect(offer):", username.value, offer);
+		setLocalDescription(rtc, offer).then(() => {
+			offer = rtc.localDescription;
+			console.info("Connect(offer):", username.value, offer);
+			serverSend({ offer });
+		});
 	});
 };
 
@@ -83,29 +84,36 @@ function serverOnOffer(user, offer) {
 	console.info("Server offer:", user, offer);
 	rtc.setRemoteDescription(new RTCSessionDescription(offer));
 	rtc.createAnswer().then(function(answer) {
-		console.info("Connect(anwer):", user, answer);
-		rtc.setLocalDescription(answer);
+		console.debug("Before Connect(anwer):", user, answer);
 		username.value = user;
-		serverSend({ answer });
+		setLocalDescription(rtc, answer).then(() => {
+			answer = rtc.localDescription;
+			console.info("Connect(anwer):", user, answer);
+			serverSend({ answer });
+		});
+	});
+}
+
+function setLocalDescription(rtc, desc) {
+	rtc.setLocalDescription(desc);
+	return new Promise((resolve, reject) => {
+		rtc.onicecandidate = function(ev) {
+			console.debug("Rtc new ICE candidate:", ev.candidate);
+			if (ev.candidate == null) {
+				console.info("Rtc ICE candidates gathered");
+				resolve();
+			}
+		}
+		rtc.onicecandidateerror = function(e) {
+			console.debug("Rtc new ICE candidate error:", e.message);
+			reject();
+		}
 	});
 }
 
 function serverOnAnswer(username, answer) {
 	console.info("Server answer:", username, answer);
 	rtc.setRemoteDescription(new RTCSessionDescription(answer));
-}
-
-rtc.onicecandidate = function(ev) {
-	console.info("Rtc new ICE candidate:", ev.candidate);
-	serverSend({ candidate: ev.candidate });
-};
-
-function serverOnCandidate(username, candidate) {
-	if (candidate != null) {
-		var candidate = new RTCIceCandidate(candidate);
-	}
-	console.info("Server new ICE candidate:", username, candidate);
-	rtc.addIceCandidate(candidate);
 }
 
 function serverSend(msg) {
