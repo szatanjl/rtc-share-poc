@@ -35,7 +35,6 @@ server.onclose = function() {
 
 rtc.onconnectionstatechange =
 rtc.oniceconnectionstatechange =
-rtc.onicegatheringstatechange =
 rtc.onsignalingstatechange =
 function() {
 	console.debug("Rtc state:", {
@@ -44,7 +43,23 @@ function() {
 		iceGatheringState: rtc.iceGatheringState,
 		signalingState: rtc.signalingState,
 	});
-}
+};
+
+rtc.onicegatheringstatechange = function(ev) {
+	console.debug("Rtc state:", {
+		connectionState: rtc.connectionState,
+		iceConnectionState: rtc.iceConnectionState,
+		iceGatheringState: rtc.iceGatheringState,
+		signalingState: rtc.signalingState,
+	});
+
+	var state = ev.target.iceGatheringState;
+	var desc = ev.target.localDescription;
+	if (state === "complete") {
+		console.info(`Connect(${desc.type}):`, username.value, desc);
+		serverSend({ desc });
+	}
+};
 
 
 server.onmessage = function(msg) {
@@ -55,10 +70,10 @@ server.onmessage = function(msg) {
 		return;
 	}
 
-	if (data.answer != null) {
-		serverOnAnswer(data.username, data.answer);
-	} else if (data.offer != null) {
-		serverOnOffer(data.username, data.offer);
+	if (data.desc != null && data.desc.type === "answer") {
+		serverOnAnswer(data.username, data.desc);
+	} else if (data.desc != null && data.desc.type === "offer") {
+		serverOnOffer(data.username, data.desc);
 	} else {
 		serverOnLogin(data.username);
 	}
@@ -71,12 +86,8 @@ function serverOnLogin(username) {
 connect.onclick = function() {
 	chat = initChat();
 	rtc.createOffer().then(function(offer) {
-		console.debug("Before Connect(offer):", username.value, offer);
-		setLocalDescription(rtc, offer).then(() => {
-			offer = rtc.localDescription;
-			console.info("Connect(offer):", username.value, offer);
-			serverSend({ offer });
-		});
+		console.debug("Create offer:", username.value, offer);
+		rtc.setLocalDescription(offer);
 	});
 };
 
@@ -84,30 +95,9 @@ function serverOnOffer(user, offer) {
 	console.info("Server offer:", user, offer);
 	rtc.setRemoteDescription(new RTCSessionDescription(offer));
 	rtc.createAnswer().then(function(answer) {
-		console.debug("Before Connect(anwer):", user, answer);
+		console.debug("Create answer:", user, answer);
 		username.value = user;
-		setLocalDescription(rtc, answer).then(() => {
-			answer = rtc.localDescription;
-			console.info("Connect(anwer):", user, answer);
-			serverSend({ answer });
-		});
-	});
-}
-
-function setLocalDescription(rtc, desc) {
-	rtc.setLocalDescription(desc);
-	return new Promise((resolve, reject) => {
-		rtc.onicecandidate = function(ev) {
-			console.debug("Rtc new ICE candidate:", ev.candidate);
-			if (ev.candidate == null) {
-				console.info("Rtc ICE candidates gathered");
-				resolve();
-			}
-		}
-		rtc.onicecandidateerror = function(e) {
-			console.debug("Rtc new ICE candidate error:", e.message);
-			reject();
-		}
+		rtc.setLocalDescription(answer);
 	});
 }
 
@@ -124,7 +114,7 @@ function serverSend(msg) {
 
 rtc.ondatachannel = function(ev) {
 	chat = initChat(ev.channel);
-}
+};
 
 function initChat(chat) {
 	if (chat == null) {
@@ -155,4 +145,4 @@ send.onclick = function() {
 	var msg = message.value;
 	console.debug("Send to chat:", msg);
 	chat.send(msg);
-}
+};
