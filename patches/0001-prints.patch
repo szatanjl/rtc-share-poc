@@ -1,0 +1,64 @@
+From 5a3bfb1e99ab9b6a5a3fa4d2c692af9188186caa Mon Sep 17 00:00:00 2001
+From: Jakub Leszczak <jakub.leszczak@golem.network>
+Date: Fri, 8 Nov 2024 11:36:50 +0100
+Subject: [PATCH] Add prints
+
+---
+ dtls/src/conn/mod.rs   | 5 ++++-
+ dtls/src/handshaker.rs | 3 +++
+ 2 files changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/dtls/src/conn/mod.rs b/dtls/src/conn/mod.rs
+index 1a140587..21a348d3 100644
+--- a/dtls/src/conn/mod.rs
++++ b/dtls/src/conn/mod.rs
+@@ -831,6 +831,7 @@ impl DTLSConn {
+ 
+             tokio::select! {
+                 _ = ctx.handshake_tx.send(done_tx) => {
++                    println!("TEST handshake TX");
+                     let mut wait_done_rx = true;
+                     while wait_done_rx{
+                         tokio::select!{
+@@ -850,7 +851,9 @@ impl DTLSConn {
+                         }
+                     }
+                 }
+-                _ = ctx.handshake_done_rx.recv() => {}
++                _ = ctx.handshake_done_rx.recv() => {
++                    println!("TEST handshake done RX");
++                }
+             }
+         }
+ 
+diff --git a/dtls/src/handshaker.rs b/dtls/src/handshaker.rs
+index b6e1a9e2..20aab69c 100644
+--- a/dtls/src/handshaker.rs
++++ b/dtls/src/handshaker.rs
+@@ -229,6 +229,7 @@ impl DTLSConn {
+ 
+             if state == HandshakeState::Finished && !self.is_handshake_completed_successfully() {
+                 self.set_handshake_completed_successfully();
++                println!("TEST handshake done TX");
+                 self.handshake_done_tx.take(); // drop it by take
+                 return Ok(());
+             }
+@@ -331,6 +332,7 @@ impl DTLSConn {
+         loop {
+             tokio::select! {
+                  done = self.handshake_rx.recv() =>{
++                    println!("TEST handshake RX 1");
+                     if done.is_none() {
+                         trace!("[handshake:{}] {} handshake_tx is dropped", srv_cli_str(self.state.is_client), self.current_flight.to_string());
+                         return Err(Error::ErrAlertFatalOrClose);
+@@ -391,6 +393,7 @@ impl DTLSConn {
+ 
+         tokio::select! {
+             done = self.handshake_rx.recv() =>{
++                println!("TEST handshake RX 2");
+                 if done.is_none() {
+                     trace!("[handshake:{}] {} handshake_tx is dropped", srv_cli_str(self.state.is_client), self.current_flight.to_string());
+                     return Err(Error::ErrAlertFatalOrClose);
+-- 
+2.47.0
+

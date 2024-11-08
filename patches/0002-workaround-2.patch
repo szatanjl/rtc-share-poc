@@ -1,0 +1,37 @@
+From f2d83c1ebc07d199a216302d84e83af2ec0d6ecd Mon Sep 17 00:00:00 2001
+From: Jakub Leszczak <jakub.leszczak@golem.network>
+Date: Fri, 8 Nov 2024 11:45:30 +0100
+Subject: [PATCH] Workaround 2
+
+---
+ dtls/src/conn/mod.rs | 7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
+
+diff --git a/dtls/src/conn/mod.rs b/dtls/src/conn/mod.rs
+index 21a348d3..d71be18b 100644
+--- a/dtls/src/conn/mod.rs
++++ b/dtls/src/conn/mod.rs
+@@ -830,6 +830,10 @@ impl DTLSConn {
+             let (done_tx, mut done_rx) = mpsc::channel(1);
+ 
+             tokio::select! {
++                biased;
++                _ = ctx.handshake_done_rx.recv() => {
++                    println!("TEST handshake done RX");
++                }
+                 _ = ctx.handshake_tx.send(done_tx) => {
+                     println!("TEST handshake TX");
+                     let mut wait_done_rx = true;
+@@ -851,9 +855,6 @@ impl DTLSConn {
+                         }
+                     }
+                 }
+-                _ = ctx.handshake_done_rx.recv() => {
+-                    println!("TEST handshake done RX");
+-                }
+             }
+         }
+ 
+-- 
+2.47.0
+

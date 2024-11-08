@@ -1,0 +1,27 @@
+From 1c748ea37f6639bdaef7a953187a2972a772b969 Mon Sep 17 00:00:00 2001
+From: Jakub Leszczak <jakub.leszczak@golem.network>
+Date: Fri, 8 Nov 2024 11:43:12 +0100
+Subject: [PATCH] Workaround 1
+
+---
+ dtls/src/conn/mod.rs | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/dtls/src/conn/mod.rs b/dtls/src/conn/mod.rs
+index 21a348d3..c32bb68c 100644
+--- a/dtls/src/conn/mod.rs
++++ b/dtls/src/conn/mod.rs
+@@ -835,6 +835,10 @@ impl DTLSConn {
+                     let mut wait_done_rx = true;
+                     while wait_done_rx{
+                         tokio::select!{
++                            _ = ctx.handshake_done_rx.recv() => {
++                                println!("TEST handshake done RX 2");
++                                wait_done_rx = false;
++                            }
+                             _ = done_rx.recv() => {
+                                 // If the other party may retransmit the flight,
+                                 // we should respond even if it not a new message.
+-- 
+2.47.0
+
